@@ -147,58 +147,75 @@ func CreateIndexIfNotExists(db *mongo.Database, collname string, indexes map[str
 		return false, e
 	}
 
-	imodels, e := parseIndexes(indexes)
+	localIModels, e := parseIndexes(indexes)
 	if e != nil {
 		return false, e
 	}
 
 	coll := DialCollection(db, collname)
 
-	if b {
-		m := make(map[string]mongo.IndexModel)
-		for _, imodel := range imodels {
-			m[imodelToString(imodel)] = imodel
-		}
-
-		cursor, e := coll.Indexes().List(context.TODO())
-		if e != nil {
-			return false, e
-		}
-		defer cursor.Close(context.TODO())
-		idx := []Index{}
-		e = cursor.All(context.TODO(), &idx)
-		if e != nil {
-			return false, e
-		}
-
-		m2 := make(map[string]Index)
-		for _, i := range idx {
-			if i.Name == "_id_" {
-				continue
-			}
-			m2[i.String()] = i
-			imodel, ok := m[i.String()]
-			if !ok {
-				log.Println(collname, " collection", ",index to be dropped:", i.String())
-				continue
-			}
-			if isUnique(imodel) != i.Unique {
-				log.Println(collname, " collection", ",index.unique inconsistant:"+i.String())
-				continue
-			}
-		}
-
-		for _, imodel := range imodels {
-			_, ok := m2[imodelToString(imodel)]
-			if !ok {
-				log.Println(collname, " collection", ",index to be created:", imodelToString(imodel))
-				continue
-			}
-		}
-		return false, nil
+	//create index
+	if !b {
+		return true, CreateIndex(coll, localIModels)
 	}
 
-	return true, CreateIndex(coll, imodels)
+	//index comparision
+	m := make(map[string]mongo.IndexModel)
+	for _, imodel := range localIModels {
+		m[imodelToString(imodel)] = imodel
+	}
+
+	cursor, e := coll.Indexes().List(context.TODO())
+	if e != nil {
+		return false, e
+	}
+	defer cursor.Close(context.TODO())
+	remoteIndexes := []Index{}
+	e = cursor.All(context.TODO(), &remoteIndexes)
+	if e != nil {
+		return false, e
+	}
+
+	m2 := make(map[string]Index)
+	for _, remoteIndex := range remoteIndexes {
+		if remoteIndex.Name == "_id_" {
+			continue
+		}
+		m2[remoteIndex.String()] = remoteIndex
+
+		//drop
+		imodel, ok := m[remoteIndex.String()]
+		if !ok {
+			log.Println(collname, " collection", ",index to be dropped:", remoteIndex.String())
+			_, e = coll.Indexes().DropOne(context.TODO(), remoteIndex.Name)
+			if e != nil {
+				log.Println(e)
+			}
+
+			continue
+		}
+
+		//unique
+		if isUnique(imodel) != remoteIndex.Unique {
+			log.Println(collname, " collection", ",index.unique inconsistant:"+remoteIndex.String())
+			continue
+		}
+	}
+
+	for _, imodel := range localIModels {
+		//create
+		_, ok := m2[imodelToString(imodel)]
+		if !ok {
+			log.Println(collname, " collection", ",index to be created:", imodelToString(imodel))
+			_, e = coll.Indexes().CreateOne(context.TODO(), imodel)
+			if e != nil {
+				log.Println(e)
+			}
+			continue
+		}
+	}
+	return false, nil
+
 }
 
 func imodelToString(i mongo.IndexModel) string {
