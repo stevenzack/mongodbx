@@ -35,17 +35,17 @@ func TakeClient(dsn string) (*mongo.Client, error) {
 	return v.(*mongo.Client), nil
 }
 
-func TakeDatabase(dsn string) (*mongo.Database, error) {
+func TakeDatabase(dsn string) (*mongo.Database, *mongo.Client, error) {
 	info, e := connstring.Parse(dsn)
 	if e != nil {
 		log.Println(e)
-		return nil, e
+		return nil, nil, e
 	}
 
 	client, e := TakeClient(strings.Replace(dsn, "/"+info.Database, "/admin", len("mongodb://")))
 	if e != nil {
 		log.Println(e)
-		return nil, e
+		return nil, nil, e
 	}
-	return client.Database(info.Database), nil
+	return client.Database(info.Database), client, nil
 }
