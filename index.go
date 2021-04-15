@@ -227,8 +227,13 @@ func CreateIndexIfNotExists(db *mongo.Database, collname string, indexes map[str
 func imodelToString(i mongo.IndexModel) string {
 	d := i.Keys.(bson.D)
 	buf := new(strings.Builder)
+	keys := []string{}
 	for _, e := range d {
-		buf.WriteString(e.Key)
+		keys = append(keys, e.Key)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		buf.WriteString(k)
 		buf.WriteString("_")
 	}
 	return buf.String()
