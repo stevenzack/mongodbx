@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -22,7 +23,12 @@ type Index struct {
 
 func (i Index) String() string {
 	buf := new(strings.Builder)
+	keys := []string{}
 	for k := range i.Key {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
 		buf.WriteString(k)
 		buf.WriteString("_")
 	}
