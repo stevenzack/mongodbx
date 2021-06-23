@@ -305,7 +305,7 @@ func (b *BaseModel) UpdateSet(id string, updater bson.M) (int64, error) {
 	if e != nil {
 		return 0, e
 	}
-	return l.ModifiedCount, nil
+	return l.MatchedCount, nil
 }
 
 func (b *BaseModel) Update(id string, updator bson.M) (int64, error) {
@@ -326,7 +326,7 @@ func (b *BaseModel) Update(id string, updator bson.M) (int64, error) {
 		return 0, e
 	}
 
-	return l.ModifiedCount, nil
+	return l.MatchedCount, nil
 }
 
 func (b *BaseModel) UpdateWhere(where bson.M, updator interface{}) (int64, error) {
@@ -334,7 +334,7 @@ func (b *BaseModel) UpdateWhere(where bson.M, updator interface{}) (int64, error
 	if e != nil {
 		return 0, e
 	}
-	return r.ModifiedCount, nil
+	return r.MatchedCount, nil
 }
 
 func (b *BaseModel) UpdateWhereD(where bson.D, updator interface{}) (int64, error) {
@@ -342,7 +342,7 @@ func (b *BaseModel) UpdateWhereD(where bson.D, updator interface{}) (int64, erro
 	if e != nil {
 		return 0, e
 	}
-	return r.ModifiedCount, nil
+	return r.MatchedCount, nil
 }
 
 // Clear clear collection
