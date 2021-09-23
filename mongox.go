@@ -65,3 +65,20 @@ func BetweenTimeD(field string, start, end time.Time, d bson.D) bson.D {
 	})
 	return d
 }
+func NullableString(s string) interface{} {
+	if s != "" {
+		return s
+	}
+	return bson.M{"$exists": false}
+}
+
+// AssignStrIne Assign string if value is not empty
+func AssignStrIne(key, value string, parent bson.M) bson.M {
+	if parent == nil {
+		parent = bson.M{}
+	}
+	if value != "" {
+		parent[key] = value
+	}
+	return parent
+}
