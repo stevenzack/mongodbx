@@ -82,3 +82,14 @@ func AssignStrIne(key, value string, parent bson.M) bson.M {
 	}
 	return parent
 }
+
+// AssignMIne Assign bson.M if value is not empty
+func AssignMIne(key string, value bson.M, parent bson.M) bson.M {
+	if parent == nil {
+		parent = bson.M{}
+	}
+	if value != nil && len(value) > 0 {
+		parent[key] = value
+	}
+	return parent
+}
