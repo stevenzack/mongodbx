@@ -162,6 +162,9 @@ func CreateIndexIfNotExists(db *mongo.Database, collname string, indexes map[str
 
 	//create index
 	if !b {
+		if !AutoUpdateTable {
+			return false, errors.New("remote collection `" + collname + "`, to be created")
+		}
 		return true, CreateIndex(coll, localIModels)
 	}
 
@@ -192,6 +195,9 @@ func CreateIndexIfNotExists(db *mongo.Database, collname string, indexes map[str
 		//drop
 		imodel, ok := m[remoteIndex.String()]
 		if !ok {
+			if !AutoUpdateTable {
+				log.Fatal(collname, " collection", ",index to be dropped:", remoteIndex.String())
+			}
 			log.Println(collname, " collection", ",index to be dropped:", remoteIndex.String())
 			_, e = coll.Indexes().DropOne(context.TODO(), remoteIndex.Name)
 			if e != nil {
@@ -203,7 +209,7 @@ func CreateIndexIfNotExists(db *mongo.Database, collname string, indexes map[str
 
 		//unique
 		if isUnique(imodel) != remoteIndex.Unique {
-			log.Println(collname, " collection", ",index.unique inconsistant:"+remoteIndex.String())
+			log.Fatal(collname, " collection", ",index.unique inconsistant:"+remoteIndex.String())
 			continue
 		}
 	}
@@ -212,6 +218,9 @@ func CreateIndexIfNotExists(db *mongo.Database, collname string, indexes map[str
 		//create
 		_, ok := m2[imodelToString(imodel)]
 		if !ok {
+			if !AutoUpdateTable {
+				log.Fatal(collname, " collection", ",index to be created:", imodelToString(imodel))
+			}
 			log.Println(collname, " collection", ",index to be created:", imodelToString(imodel))
 			_, e = coll.Indexes().CreateOne(context.TODO(), imodel)
 			if e != nil {

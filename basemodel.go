@@ -21,6 +21,11 @@ type BaseModel struct {
 	Collection     *mongo.Collection
 }
 
+var (
+	AutoCheckTable  = false
+	AutoUpdateTable = false
+)
+
 func NewBaseModel(dsn string, data interface{}) (*BaseModel, error) {
 	model, _, e := NewBaseModelWithCreated(dsn, data)
 	return model, e
@@ -34,12 +39,15 @@ func NewBaseModelWithCreated(dsn string, data interface{}) (*BaseModel, bool, er
 		return nil, false, e
 	}
 
-	created, e := model.initData(data)
-	if e != nil {
-		return nil, false, e
+	if AutoCheckTable {
+		created, e := model.initData(data)
+		if e != nil {
+			return nil, false, e
+		}
+		return model, created, e
 	}
 
-	return model, created, nil
+	return model, false, nil
 }
 
 func (b *BaseModel) initData(data interface{}) (bool, error) {
